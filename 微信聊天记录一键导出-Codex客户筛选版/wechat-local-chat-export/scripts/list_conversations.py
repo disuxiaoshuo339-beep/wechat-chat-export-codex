@@ -9,6 +9,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from wechat_export.runtime_paths import validate_runtime_directory  # noqa: E402
 
 from wechat_export.export import scan_private_conversations  # noqa: E402
 from wechat_export.screening import write_screening_csv  # noqa: E402
@@ -28,6 +29,7 @@ def _read_state(run_root: Path) -> dict[str, object]:
 
 
 def list_conversations(run_root: Path) -> dict[str, object]:
+    run_root = validate_runtime_directory(run_root)
     decrypted = run_root / "private" / "decrypted"
     if not decrypted.is_dir():
         raise RuntimeError(
@@ -72,7 +74,7 @@ def main() -> int:
     parser.add_argument("--run-root", required=True, type=Path)
     args = parser.parse_args()
 
-    run_root = args.run_root.resolve()
+    run_root = validate_runtime_directory(args.run_root)
     try:
         result = list_conversations(run_root)
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))

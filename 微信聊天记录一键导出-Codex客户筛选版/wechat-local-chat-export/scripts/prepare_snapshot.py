@@ -23,6 +23,7 @@ from wechat_export.discovery import (  # noqa: E402
 )
 from wechat_export.key_scan import enumerate_authorized_weixin_processes  # noqa: E402
 from wechat_export.manifest import copy_with_manifest  # noqa: E402
+from wechat_export.runtime_paths import default_output_root, validate_runtime_directory  # noqa: E402
 from wechat_export.sqlcipher import decrypt_database, verify_sqlite  # noqa: E402
 from wechat_export.wal import apply_encrypted_wal  # noqa: E402
 
@@ -33,14 +34,11 @@ def _safe_component(value: str) -> str:
 
 
 def _default_output_root() -> Path:
-    preferred = Path(r"D:\微信客户聊天整理")
-    if Path("D:/").exists():
-        return preferred
-    return Path.cwd() / "outputs"
+    return default_output_root()
 
 
 def _new_run_root(output_root: Path, account_id: str) -> Path:
-    account_root = output_root.resolve() / _safe_component(account_id)
+    account_root = validate_runtime_directory(output_root) / _safe_component(account_id)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     candidate = account_root / f"{stamp}-run"
     suffix = 1
@@ -134,6 +132,7 @@ def main() -> int:
     parser.add_argument("--root", action="append", type=Path, default=[])
     parser.add_argument("--output-root", type=Path)
     args = parser.parse_args()
+    output_root = validate_runtime_directory(args.output_root or _default_output_root())
 
     if os.name != "nt":
         raise OSError("Windows is required")
@@ -150,7 +149,8 @@ def main() -> int:
     if not account.core_files_ok:
         raise RuntimeError("authorized account is missing core databases")
 
-    run_root = _new_run_root(args.output_root or _default_output_root(), account.account_id)
+    output_root = validate_runtime_directory(output_root, account.db_storage)
+    run_root = _new_run_root(output_root, account.account_id)
     state: dict[str, object] = {
         "status": "running",
         "account_id": account.account_id,

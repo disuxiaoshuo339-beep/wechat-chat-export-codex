@@ -7,7 +7,7 @@ description: Use when a Windows user asks to export, 整理, 备份, 取数, or 
 
 把用户明确授权的 Windows 微信 4.x 本地账号里、**用户本人逐条勾选确认过的客户会话**，整理为一对一聊天 HTML、CSV、Excel 索引和摘要 ZIP。全程只在本机处理。
 
-与全量导出版的唯一区别：中间多了一道「会话清单 → 人工勾选 → 只导出勾中的」筛选闸门。私人会话（亲友、同事、非客户）的聊天正文从头到尾不会被读取，也不会进入交付物。
+与全量导出版的唯一区别：中间多了一道「会话清单 → 人工勾选 → 只导出勾中的」筛选闸门。未勾选会话不会进入正文查询或交付物；但筛选前的本机解密数据库可能含这些会话，须按流程清理。
 
 ## 不可越过的授权门
 
@@ -36,7 +36,7 @@ description: Use when a Windows user asks to export, 整理, 备份, 取数, or 
 
    `python scripts/prepare_snapshot.py --account-id "准确账号ID"`
 
-   如需指定用户同意的输出位置，加 `--output-root "绝对路径"`。不得把输出写回微信数据目录。记下返回的 `run_root`。
+   默认输出为 `%LOCALAPPDATA%\WeChatChatExport\runs`。如需指定用户同意的输出位置，加 `--output-root "绝对路径"`；必须在 Git 仓库、工具目录和微信源账号目录之外。记下返回的 `run_root`。
 
 5. 生成会话清单（零正文）：
 
@@ -62,7 +62,7 @@ description: Use when a Windows user asks to export, 整理, 备份, 取数, or 
 
    `python scripts/finalize_delivery.py --run-root "run_root" --purge-workspace`
 
-   `--purge-workspace` 会在 ZIP 校验通过后删除 `run_root\source_copy` 与 `run_root\private`——这两个目录里是解密后的完整明文数据库，**包含未导出的私人会话**，留在磁盘上等于筛选白做了。除非用户明确要求保留以便重跑，否则必须带上这个开关。
+   `--purge-workspace` 会在 ZIP 校验通过后删除 `run_root\source_copy` 与 `run_root\private`——这两个目录包含源数据库快照和解密后的数据库，**包含未导出的私人会话**，留在磁盘上等于筛选白做了。除非用户明确要求保留以便重跑，否则必须带上这个开关。
 
 10. 只在终态为 `complete` 且对账、文件类型和 ZIP CRC 都通过后宣布完成，并给出交付 ZIP 的绝对路径、客户会话数和消息数。同时告诉用户被筛除的会话数（只报数字）。
 
@@ -73,3 +73,7 @@ description: Use when a Windows user asks to export, 整理, 备份, 取数, or 
 - 会话清单一行都没勾 `Y` 时脚本会报错停止，这是预期行为——回到第 6 步让用户确认。
 - 不要用过期快照或部分成功结果冒充全量。修复条件后创建新的运行目录重跑。
 - 错误报告只给阶段、错误类型和可操作建议；不要粘贴聊天正文、联系人姓名、密钥或数据库二进制内容。
+
+## 公开源码与本地私人数据
+
+先 clone/pull 到用户本机再操作。普通导出不执行 git add/commit/push，不使用 GitHub Actions 或 Codespaces；不把任何聊天、联系人、密钥、数据库、运行日志或导出产物上传 GitHub 或模型对话。发布源码的明确授权不包含发布实际聊天数据。

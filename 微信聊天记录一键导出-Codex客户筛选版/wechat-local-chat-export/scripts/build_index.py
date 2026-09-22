@@ -9,6 +9,9 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from wechat_export.runtime_paths import validate_runtime_directory  # noqa: E402
+
 INDEX_HEADERS = [
     "序号", "客户显示名", "备注名", "昵称", "微信号", "微信号别名",
     "消息数", "我发送", "客户发送", "未知方向", "首条时间", "末条时间",
@@ -25,6 +28,12 @@ _COLUMN_WIDTHS = {
 
 _INTEGER_COLUMNS = ("A",)
 _COUNT_COLUMNS = ("G", "H", "I", "J")
+
+
+def _spreadsheet_safe(value: object) -> object:
+    if isinstance(value, str) and value.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + value
+    return value
 
 
 def _write_state(run_root: Path, payload: dict[str, object]) -> None:
@@ -108,7 +117,7 @@ def _build_xlsx(source: dict, rows: list[dict], out_path: Path) -> None:
         cell.font = header_font
     index_sheet.row_dimensions[1].height = 28
     for row in rows:
-        index_sheet.append([row.get(key, "") for key in INDEX_HEADERS])
+        index_sheet.append([_spreadsheet_safe(row.get(key, "")) for key in INDEX_HEADERS])
 
     last_row = len(rows) + 1
     if last_row >= 2:
@@ -141,10 +150,11 @@ def _write_csv_fallback(rows: list[dict], out_path: Path) -> None:
         writer = csv.writer(stream)
         writer.writerow(INDEX_HEADERS)
         for row in rows:
-            writer.writerow([row.get(key, "") for key in INDEX_HEADERS])
+            writer.writerow([_spreadsheet_safe(row.get(key, "")) for key in INDEX_HEADERS])
 
 
 def build_index(run_root: Path) -> dict[str, object]:
+    run_root = validate_runtime_directory(run_root)
     delivery = run_root / "delivery"
     index_json = delivery / "客户索引数据.json"
     if not index_json.is_file():
@@ -195,7 +205,7 @@ def main() -> int:
     parser.add_argument("--run-root", required=True, type=Path)
     args = parser.parse_args()
 
-    run_root = args.run_root.resolve()
+    run_root = validate_runtime_directory(args.run_root)
     try:
         result = build_index(run_root)
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))

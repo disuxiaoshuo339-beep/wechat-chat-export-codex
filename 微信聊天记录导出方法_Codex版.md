@@ -1,6 +1,6 @@
 # 使用 Codex 导出微信聊天记录｜同事分享版
 
-整理日期：2026-09-21（Codex 版 v2）  
+整理日期：2026-09-21（Codex 开源版 v3）  
 适用工具：Windows 上的 Codex Desktop。  
 脚本依据：项目内 2026-09-02 更新的客户筛选版。
 
@@ -8,11 +8,24 @@
 
 **请把本说明与 `微信聊天记录一键导出-Codex客户筛选版.zip` 一起发给同事。MD 是说明书，ZIP 是配套程序。**
 
+## 0. 先克隆到自己的电脑，聊天数据不上 GitHub
+
+在自己的 Windows PowerShell 中执行：
+
+```powershell
+git clone https://github.com/disuxiaoshuo339-beep/wechat-chat-export-codex.git
+cd wechat-chat-export-codex
+```
+
+然后用 Codex Desktop 打开这个本地项目，按根目录 README 和 AGENTS.md 操作。更新工具代码可执行 `git pull --ff-only`。普通使用无需 fork、提交或 push；不要在 GitHub Actions/Codespaces 中导出。
+
+实际联系人、会话清单、聊天正文、数据库、密钥、日志及导出 ZIP 只留在本机，不上传提交、Issue、PR、Gist、Release 或附件，也不粘贴到 AI 对话。默认输出为 `%LOCALAPPDATA%\WeChatChatExport\runs`，位于工具目录之外。不要把聊天内容粘进已有 README 或源码文件。
+
 ## 1. 本次使用的版本
 
 本说明专门按 **Codex Desktop** 的操作方式整理。配套包基于项目中 2026-09-02 的客户筛选版，保留「本人勾选会话 → 只导出勾选项 → 核验后清理中间数据库」流程。
 
-本次调整的是 Codex 使用入口、文档与附件名称，Python 脚本沿用该版，不需要安装全局 Skill。“最新”指本次在项目相关目录中找到的较新流程，不代表互联网上工具的最新发布。
+开源版增加了仓库外默认输出、运行路径检查、索引公式转义和 Git 防误提交规则，不需要安装全局 Skill。“最新”指本次在项目相关目录中找到的较新流程，不代表互联网上工具的最新发布。
 
 ## 2. 能导出什么
 
@@ -28,11 +41,11 @@
 1. 使用 Windows 电脑，登录要处理的微信账号，并在全过程保持微信运行。工具目标为微信 4.x，具体小版本仍需本机检查与数据库校验。
 2. 确认自己有权处理该账号及相关记录。
 3. 安装 Python 3.11 或以上；在终端运行 `python --version` 能看到版本号。
-4. 解压工具 ZIP 到自己的工作目录，例如 `D:\微信导出`。找到同时包含 `START_HERE.md`、`AGENTS.md` 和 `wechat-local-chat-export` 文件夹的那一层。
+4. 推荐按第 0 节克隆仓库；也可解压工具 ZIP 到自己的工作目录。克隆用户打开仓库根目录；ZIP 用户找到同时包含 `START_HERE.md`、`AGENTS.md` 和 `wechat-local-chat-export` 文件夹的那一层。
 5. 打开并登录 Codex Desktop，将上一步找到的文件夹添加为**本地项目的主文件夹**，然后在该项目里新建任务。确认任务在这台 Windows 电脑执行，能访问解压目录和本机微信数据。
 6. 输出位置放在微信数据目录之外，并为数据库快照、解密副本和导出结果预留空间。
 
-Codex 本地项目的主文件夹用于新任务的默认工作目录和 `AGENTS.md` 等项目文件的自动发现；因此应选包含 `START_HERE.md` 的那一层，而不是外层下载目录。参见 [OpenAI 官方文档：本地项目与文件夹](https://learn.chatgpt.com/docs/projects#use-local-projects-for-folders-and-codebases)。
+Codex 本地项目的主文件夹用于新任务的默认工作目录和 `AGENTS.md` 等项目文件的自动发现；克隆用户选择仓库根目录，ZIP 用户选择含 `START_HERE.md` 的那一层。参见 [OpenAI 官方文档：本地项目与文件夹](https://learn.chatgpt.com/docs/projects#use-local-projects-for-folders-and-codebases)。
 
 依赖由预检确认：`pycryptodomex` 用于数据库解密；`zstandard` 用于解析压缩内容，Python 3.14 的内置 zstd 支持可替代它；`openpyxl` 用于生成 Excel，缺少时可以降级为 CSV 索引。缺依赖时先了解用途，再同意安装。
 
@@ -44,12 +57,13 @@ Codex 本地项目的主文件夹用于新任务的默认工作目录和 `AGENTS
 
 ```text
 请确认当前任务使用这台 Windows 电脑上的解压目录。
-先阅读 START_HERE.md 和 wechat-local-chat-export/SKILL.md，
+先阅读当前目录的 AGENTS.md，按它指向的 START_HERE.md 和 SKILL.md 操作，
 按客户筛选版流程帮我导出微信聊天记录。现在只开始只读预检。
 
 预检后列出准确账号 ID，等我明确授权；生成会话清单后等我本人勾选。
 不要代我选择账号，不要打开会话清单查看联系人，不要在对话里展示聊天正文。
 聊天数据只在本机处理，不上传数据库、密钥、会话清单或聊天内容。
+使用仓库外的默认本地输出位置；不执行 git add/commit/push。
 ```
 
 这一步只检查环境和发现账号，不开始实际导出。
@@ -125,7 +139,7 @@ Codex 列出账号后，核对并回复：
 
 `--purge-workspace` 在 ZIP 校验通过后删除本次运行的 `source_copy`（源数据库快照）和 `private`（含解密数据）。它**不会自动删除运行目录中的 `会话清单.csv`**；该文件仍含联系人元数据，需要本人妥善保管或在不再需要时自行删除。中途失败也不能假定中间文件已清理。
 
-分享操作方法时发送本 MD 和工具附件 ZIP；实际聊天交付 ZIP 含个人／业务数据，只交给有权接收的人。不要发送整个运行目录。
+分享操作方法时发送公开仓库链接即可。实际聊天交付 ZIP 含个人／业务数据，只留在本人电脑；不要发到 GitHub，也不要发送整个运行目录。
 
 ## 7. 常见问题
 
@@ -151,10 +165,10 @@ Codex 列出账号后，核对并回复：
 python scripts/preflight.py
 ```
 
-取得本人对准确账号的明确授权后，建立快照并解密。输出目录必须位于微信数据目录之外：
+取得本人对准确账号的明确授权后，建立快照并解密。默认输出为 `%LOCALAPPDATA%\WeChatChatExport\runs`；自定义路径也必须在 Git 仓库、工具目录及微信源账号目录之外：
 
 ```powershell
-python scripts/prepare_snapshot.py --account-id "<准确账号ID>" --output-root "D:\微信导出结果"
+python scripts/prepare_snapshot.py --account-id "<准确账号ID>"
 ```
 
 记下返回的 `run_root`，后续始终使用同一次运行的路径：
@@ -182,7 +196,7 @@ python scripts/finalize_delivery.py --run-root "<本次run_root绝对路径>" --
 
 导出流程依据项目客户筛选版的 `START_HERE.md`、`AGENTS.md`、`wechat-local-chat-export/SKILL.md`、两份 `references` 文档及实际脚本；Codex 本地项目步骤依据上文链接的 OpenAI 官方文档。
 
-本次 Codex 附件包调整了使用文档及包装名称，并去掉一条含原机器安装路径的注释。**33 个 Python 文件的语法树与项目客户筛选版一致，执行逻辑未改变**。附件包共 **39 个文件**，仅含 `.md`、`.py`，ZIP CRC 检查通过。测试中的联系人、号码、账号及消息均为合成样例。
+开源版新增运行路径检查及索引公式转义；`.gitignore` 仅允许明确列出的源码、说明及工具包，新文件默认忽略。发布检查、测试结果及实际工具 ZIP 文件数以仓库 `PRIVACY_CHECK.md` 为准。测试中的联系人、号码、账号及消息均为合成样例。
 
 本次没有启动微信导出，没有读取真实会话清单或聊天正文，没有验证同事电脑上的具体微信小版本。首次使用仍须由 Codex 做本机预检，并完成账号确认、会话筛选和导出对账。
 

@@ -2,6 +2,8 @@
 
 你是执行本附件包的 Codex。请在用户这台 Windows 电脑的本地项目中执行。先完整阅读 `wechat-local-chat-export/SKILL.md`，再按其中流程操作。
 
+先将仓库克隆或工具 ZIP 解压到用户自己的 Windows 电脑，再本地运行。普通使用不执行 git add/commit/push，不向 GitHub 上传任何聊天记录、会话清单或运行产物。默认输出为 `%LOCALAPPDATA%\WeChatChatExport\runs`，标准入口拒绝输出到 Git 仓库或工具目录。
+
 不要把本包安装到全局 Skills。不要把任何聊天内容、数据库、密钥、进程转储或日志上传到外部服务、云端分析或付费 API。全程只在本机处理。
 
 ## 三道不可越过的门

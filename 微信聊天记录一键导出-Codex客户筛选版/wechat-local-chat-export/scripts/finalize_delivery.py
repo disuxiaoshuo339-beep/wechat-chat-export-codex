@@ -12,6 +12,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from wechat_export.runtime_paths import validate_runtime_directory  # noqa: E402
 
 from wechat_export.reconcile import validate_archive_members  # noqa: E402
 
@@ -52,6 +53,7 @@ def _purge_workspace(run_root: Path) -> list[str]:
 
 
 def finalize(run_root: Path, purge_workspace: bool = False) -> dict[str, object]:
+    run_root = validate_runtime_directory(run_root)
     delivery = run_root / "delivery"
     source = json.loads((delivery / "客户索引数据.json").read_text(encoding="utf-8"))
     rows = source["index_rows"]
@@ -130,7 +132,7 @@ def main() -> int:
     args = parser.parse_args()
     print(
         json.dumps(
-            finalize(args.run_root.resolve(), purge_workspace=args.purge_workspace),
+            finalize(validate_runtime_directory(args.run_root), purge_workspace=args.purge_workspace),
             ensure_ascii=False,
             sort_keys=True,
         )
