@@ -1,0 +1,26 @@
+# Local runtime data must never be committed
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.dmp
+*.log
+keys.json
+source_copy/
+private/
+outputs/
+delivery/
+*-run/
+*-run-*/
+会话清单.csv
+客户索引数据.json
+run-state.json
+source-manifest.csv
+final-result.json
+微信客户聊天记录_交付.zip
